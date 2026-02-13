@@ -1,1 +1,11 @@
-/data/**
+target/
+queue/
+archive/
+*.log
+.DS_Store
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+bin/
