@@ -3,6 +3,7 @@ package com.example.gemtext2kindle.stage2;
 import java.util.Scanner;
 
 public class GmiParser {
+    private final HtmlEscaper escaper = new HtmlEscaper();
 
     public String convert(String input) {
         StringBuilder html = new StringBuilder();
@@ -24,7 +25,7 @@ public class GmiParser {
             }
 
             if (preformatted) {
-                html.append(escapeHtml(line)).append("\n");
+                html.append(escaper.escape(line)).append("\n");
                 continue;
             }
 
@@ -33,7 +34,7 @@ public class GmiParser {
                     html.append("<ul>\n");
                     inList = true;
                 }
-                html.append("<li>").append(escapeHtml(line.substring(2))).append("</li>\n");
+                html.append("<li>").append(escaper.escape(line.substring(2))).append("</li>\n");
                 continue;
             } else if (inList) {
                 html.append("</ul>\n");
@@ -51,30 +52,23 @@ public class GmiParser {
 
     public String toHtml(String line) {
         if (line.startsWith("### ")) {
-            return "<h3>" + escapeHtml(line.substring(4)) + "</h3>";
+            return "<h3>" + escaper.escape(line.substring(4)) + "</h3>";
         } else if (line.startsWith("## ")) {
-            return "<h2>" + escapeHtml(line.substring(3)) + "</h2>";
+            return "<h2>" + escaper.escape(line.substring(3)) + "</h2>";
         } else if (line.startsWith("# ")) {
-            return "<h1>" + escapeHtml(line.substring(2)) + "</h1>";
+            return "<h1>" + escaper.escape(line.substring(2)) + "</h1>";
         } else if (line.startsWith("=> ")) {
             String content = line.substring(3).trim();
             String[] parts = content.split("\\s+", 2);
             String url = parts[0];
             String text = parts.length > 1 ? parts[1] : url;
-            return "<p><a href=\"" + url + "\">" + escapeHtml(text) + "</a></p>";
+            return "<p><a href=\"" + url + "\">" + escaper.escape(text) + "</a></p>";
         } else if (line.startsWith("* ")) {
-            return "<ul><li>" + escapeHtml(line.substring(2)) + "</li></ul>";
+            return "<ul><li>" + escaper.escape(line.substring(2)) + "</li></ul>";
         } else if (line.isEmpty()) {
             return "<br/>";
         } else {
-            return "<p>" + escapeHtml(line) + "</p>";
+            return "<p>" + escaper.escape(line) + "</p>";
         }
-    }
-
-    private String escapeHtml(String text) {
-        return text.replace("&", "&" + "amp;")
-                   .replace("<", "&" + "lt;")
-                   .replace(">", "&" + "gt;")
-                   .replace("\"", "&" + "quot;");
     }
 }

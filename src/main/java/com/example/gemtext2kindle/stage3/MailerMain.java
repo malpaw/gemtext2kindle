@@ -15,10 +15,7 @@ public class MailerMain {
 
         Path inputDir = Path.of(args[0]);
         Path processedDir = Path.of(args[1]);
-        String host = args[2];
-        String port = args[3];
-        String user = args[4];
-        String password = args[5];
+        SmtpConfig config = new SmtpConfig(args[2], args[3], args[4], args[5]);
         String to = args[6];
         String subject = args[7];
 
@@ -31,7 +28,7 @@ public class MailerMain {
                  .forEach(f -> {
                      try {
                          System.out.println("Sending: " + f.getFileName());
-                         mailer.sendEmail(host, port, user, password, to, subject, "Sent from gemtext2kindle", f.toAbsolutePath().toString());
+                         mailer.sendEmail(config, to, subject, "Sent from gemtext2kindle", f.toAbsolutePath().toString());
                          Files.move(f, processedDir.resolve(f.getFileName()));
                          System.out.println("Success: " + f.getFileName());
                      } catch (Exception e) {
