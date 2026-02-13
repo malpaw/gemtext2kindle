@@ -16,19 +16,23 @@ public class FetcherMain {
 
         Path feedsPath = Path.of(args[0]);
         Path outputDir = Path.of(args[1]);
+        
+        // Use RealProtocolClient by default
+        run(feedsPath, outputDir, new RealProtocolClient());
+    }
+
+    public static void run(Path feedsPath, Path outputDir, ProtocolClient client) throws IOException {
         Files.createDirectories(outputDir);
 
         String content = Files.readString(feedsPath, StandardCharsets.UTF_8);
         FeedParser parser = new FeedParser();
         List<FeedEntry> entries = parser.parseEntries(content);
         
-        ProtocolClient client = new ProtocolClient();
-
-        Files.readAllLines(feedsPath, StandardCharsets.UTF_8);
-        
         FeedUpdater updater = new FeedUpdater();
+        FeedStatusChecker checker = new FeedStatusChecker();
+        
         for (FeedEntry entry : entries) {
-            if (entry.timestamp2() == 0) {
+            if (checker.needsDownload(entry)) {
                 System.out.println("Fetching new entry: " + entry.url());
                 try {
                     String articleContent = client.fetch(entry.url());
