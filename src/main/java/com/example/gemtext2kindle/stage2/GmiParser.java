@@ -8,46 +8,50 @@ public class GmiParser {
     public String convert(String input) {
         StringBuilder html = new StringBuilder();
         Scanner scanner = new Scanner(input);
-        boolean preformatted = false;
-        boolean inList = false;
+        try {
+            boolean preformatted = false;
+            boolean inList = false;
 
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            
-            if (line.startsWith("```")) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                
+                if (line.startsWith("```")) {
+                    if (preformatted) {
+                        html.append("</pre>\n");
+                    } else {
+                        html.append("<pre>\n");
+                    }
+                    preformatted = !preformatted;
+                    continue;
+                }
+
                 if (preformatted) {
-                    html.append("</pre>\n");
-                } else {
-                    html.append("<pre>\n");
+                    html.append(escaper.escape(line)).append("\n");
+                    continue;
                 }
-                preformatted = !preformatted;
-                continue;
-            }
 
-            if (preformatted) {
-                html.append(escaper.escape(line)).append("\n");
-                continue;
-            }
-
-            if (line.startsWith("* ")) {
-                if (!inList) {
-                    html.append("<ul>\n");
-                    inList = true;
+                if (line.startsWith("* ")) {
+                    if (!inList) {
+                        html.append("<ul>\n");
+                        inList = true;
+                    }
+                    html.append("<li>").append(escaper.escape(line.substring(2))).append("</li>\n");
+                    continue;
+                } else if (inList) {
+                    html.append("</ul>\n");
+                    inList = false;
                 }
-                html.append("<li>").append(escaper.escape(line.substring(2))).append("</li>\n");
-                continue;
-            } else if (inList) {
-                html.append("</ul>\n");
-                inList = false;
-            }
 
-            html.append(toHtml(line)).append("\n");
+                html.append(toHtml(line)).append("\n");
+            }
+            
+            if (inList) html.append("</ul>\n");
+            if (preformatted) html.append("</pre>\n");
+            
+            return html.toString();
+        } finally {
+            scanner.close();
         }
-        
-        if (inList) html.append("</ul>\n");
-        if (preformatted) html.append("</pre>\n");
-        
-        return html.toString();
     }
 
     public String toHtml(String line) {

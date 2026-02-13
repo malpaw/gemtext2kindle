@@ -1,12 +1,10 @@
 package com.example.gemtext2kindle.stage1;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FetcherMain {
 
@@ -26,7 +24,7 @@ public class FetcherMain {
         
         ProtocolClient client = new ProtocolClient();
 
-        List<String> lines = Files.readAllLines(feedsPath, StandardCharsets.UTF_8);
+        Files.readAllLines(feedsPath, StandardCharsets.UTF_8);
         
         FeedUpdater updater = new FeedUpdater();
         for (FeedEntry entry : entries) {
