@@ -10,38 +10,9 @@ import java.util.List;
 public class FeedUpdater {
 
     public void removeEntries(Path feedsPath, List<String> urlsToRemove) throws IOException {
-        List<String> lines = Files.readAllLines(feedsPath, StandardCharsets.UTF_8);
-        List<String> result = new ArrayList<>();
-        
-        int i = 0;
-        // Keep header and feeds
-        while (i < lines.size() && !lines.get(i).startsWith("# Entries")) {
-            result.add(lines.get(i++));
-        }
-        
-        if (i < lines.size()) {
-            result.add(lines.get(i++)); // add "# Entries"
-        }
-        
-        // Filter entries
-        while (i + 4 < lines.size()) {
-            String feedId = lines.get(i);
-            String t1 = lines.get(i + 1);
-            String t2 = lines.get(i + 2);
-            String url = lines.get(i + 3);
-            String title = lines.get(i + 4);
-            
-            if (!urlsToRemove.contains(url.trim())) {
-                result.add(feedId);
-                result.add(t1);
-                result.add(t2);
-                result.add(url);
-                result.add(title);
-            }
-            i += 5;
-        }
-        
-        Files.write(feedsPath, result, StandardCharsets.UTF_8);
+        // In Lagrange, entries are not removed from feeds.txt after being read.
+        // Instead, their read state is tracked in visited.2.txt.
+        // This method is now a no-op to match that behavior, or could be used for actual purging of old entries.
     }
 
     public void updateGlobalTimestamp(Path feedsPath) throws IOException {

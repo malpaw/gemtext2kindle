@@ -13,19 +13,22 @@ import java.util.stream.Collectors;
 public class FetcherMain {
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.err.println("Usage: FetcherMain <feeds.txt path> <output queue dir>");
+        if (args.length < 3) {
+            System.err.println("Usage: FetcherMain <feeds.txt path> <visited.2.txt path> <output queue dir>");
             System.exit(1);
         }
 
         Path feedsPath = Path.of(args[0]);
-        Path outputDir = Path.of(args[1]);
+        Path visitedPath = Path.of(args[1]);
+        Path outputDir = Path.of(args[2]);
         
-        run(feedsPath, outputDir, new RealProtocolClient());
+        run(feedsPath, visitedPath, outputDir, new RealProtocolClient());
     }
 
-    public static void run(Path feedsPath, Path outputDir, ProtocolClient client) throws IOException {
+    public static void run(Path feedsPath, Path visitedPath, Path outputDir, ProtocolClient client) throws IOException {
         Files.createDirectories(outputDir);
+
+        VisitedStore visitedStore = new VisitedStore(visitedPath);
 
         String content = Files.readString(feedsPath, StandardCharsets.UTF_8);
         FeedParser parser = new FeedParser();
@@ -36,7 +39,7 @@ public class FetcherMain {
                 .collect(Collectors.toMap(Feed::id, Feed::url));
 
         FeedUpdater updater = new FeedUpdater();
-        FeedStatusChecker checker = new FeedStatusChecker();
+        FeedStatusChecker checker = new FeedStatusChecker(visitedStore);
         
         List<String> processedUrls = new ArrayList<>();
 
@@ -55,6 +58,9 @@ public class FetcherMain {
                     Files.writeString(outputDir.resolve(fileName), fullContent);
                     
                     System.out.println("Success: " + fileName);
+                    
+                    // Mark as visited
+                    visitedStore.addVisit(entry.url());
                     processedUrls.add(entry.url());
                 } catch (Exception e) {
                     System.err.println("Failed to fetch " + entry.url() + ": " + e.getMessage());
