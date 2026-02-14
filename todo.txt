@@ -1,0 +1,1 @@
+[ ] Refactor the namespace of the project to io.malpaw.gemtext2kindle
