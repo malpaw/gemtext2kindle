@@ -1,5 +1,6 @@
 package com.example.gemtext2kindle.stage2;
 
+import com.example.gemtext2kindle.common.ArticleMetadata;
 import java.util.Scanner;
 
 public class GmiParser {
@@ -8,50 +9,58 @@ public class GmiParser {
     public String convert(String input) {
         StringBuilder html = new StringBuilder();
         Scanner scanner = new Scanner(input);
-        try {
-            boolean preformatted = false;
-            boolean inList = false;
+        boolean preformatted = false;
+        boolean inList = false;
 
+        // Skip metadata header if present
+        if (input.startsWith("---")) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                
-                if (line.startsWith("```")) {
-                    if (preformatted) {
-                        html.append("</pre>\n");
-                    } else {
-                        html.append("<pre>\n");
-                    }
-                    preformatted = !preformatted;
-                    continue;
+                if (line.trim().equals("---") && html.length() > 0) {
+                    break;
                 }
-
-                if (preformatted) {
-                    html.append(escaper.escape(line)).append("\n");
-                    continue;
-                }
-
-                if (line.startsWith("* ")) {
-                    if (!inList) {
-                        html.append("<ul>\n");
-                        inList = true;
-                    }
-                    html.append("<li>").append(escaper.escape(line.substring(2))).append("</li>\n");
-                    continue;
-                } else if (inList) {
-                    html.append("</ul>\n");
-                    inList = false;
-                }
-
-                html.append(toHtml(line)).append("\n");
+                html.append("metadata_skipped\n"); // dummy to track we are inside
             }
-            
-            if (inList) html.append("</ul>\n");
-            if (preformatted) html.append("</pre>\n");
-            
-            return html.toString();
-        } finally {
-            scanner.close();
+            html.setLength(0); // clear dummy
         }
+
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            
+            if (line.startsWith("```")) {
+                if (preformatted) {
+                    html.append("</pre>\n");
+                } else {
+                    html.append("<pre>\n");
+                }
+                preformatted = !preformatted;
+                continue;
+            }
+
+            if (preformatted) {
+                html.append(escaper.escape(line)).append("\n");
+                continue;
+            }
+
+            if (line.startsWith("* ")) {
+                if (!inList) {
+                    html.append("<ul>\n");
+                    inList = true;
+                }
+                html.append("<li>").append(escaper.escape(line.substring(2))).append("</li>\n");
+                continue;
+            } else if (inList) {
+                html.append("</ul>\n");
+                inList = false;
+            }
+
+            html.append(toHtml(line)).append("\n");
+        }
+        
+        if (inList) html.append("</ul>\n");
+        if (preformatted) html.append("</pre>\n");
+        
+        return html.toString();
     }
 
     public String toHtml(String line) {

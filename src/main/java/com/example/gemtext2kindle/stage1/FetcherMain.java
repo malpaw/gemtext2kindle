@@ -1,11 +1,14 @@
 package com.example.gemtext2kindle.stage1;
 
+import com.example.gemtext2kindle.common.ArticleMetadata;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FetcherMain {
 
@@ -26,8 +29,12 @@ public class FetcherMain {
 
         String content = Files.readString(feedsPath, StandardCharsets.UTF_8);
         FeedParser parser = new FeedParser();
+        List<Feed> feeds = parser.parse(content);
         List<FeedEntry> entries = parser.parseEntries(content);
         
+        Map<String, String> feedMap = feeds.stream()
+                .collect(Collectors.toMap(Feed::id, Feed::url));
+
         FeedUpdater updater = new FeedUpdater();
         FeedStatusChecker checker = new FeedStatusChecker();
         
@@ -38,8 +45,14 @@ public class FetcherMain {
                 System.out.println("Fetching new entry: " + entry.url());
                 try {
                     String articleContent = client.fetch(entry.url());
+                    
+                    String feedUrl = feedMap.getOrDefault(entry.feedId(), "Unknown Feed");
+                    ArticleMetadata meta = new ArticleMetadata(feedUrl, null, entry.title(), entry.timestamp1(), entry.url());
+                    
+                    String fullContent = meta.serialize() + articleContent;
+                    
                     String fileName = sanitizeFileName(entry.url()) + ".gmi";
-                    Files.writeString(outputDir.resolve(fileName), articleContent);
+                    Files.writeString(outputDir.resolve(fileName), fullContent);
                     
                     System.out.println("Success: " + fileName);
                     processedUrls.add(entry.url());
