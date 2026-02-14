@@ -6,6 +6,10 @@ import java.io.*;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class RealProtocolClient implements ProtocolClient {
 
@@ -25,29 +29,42 @@ public class RealProtocolClient implements ProtocolClient {
     private String fetchGemini(URI uri) throws IOException {
         String host = uri.getHost();
         int port = uri.getPort() == -1 ? 1965 : uri.getPort();
-        
-        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-        try (SSLSocket socket = (SSLSocket) factory.createSocket(host, port)) {
-            socket.startHandshake();
-            
-            PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
-            out.print(uri.toString() + "\r\n");
-            out.flush();
-            
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-            String header = in.readLine();
-            if (header == null) throw new IOException("No response from Gemini server");
-            
-            if (header.startsWith("2")) { // Success
-                StringBuilder content = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    content.append(line).append("\n");
+
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() { return null; }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {}
                 }
-                return content.toString();
-            } else {
-                throw new IOException("Gemini server returned error: " + header);
+            }, new java.security.SecureRandom());
+            SSLSocketFactory factory = sc.getSocketFactory();
+            
+            try (SSLSocket socket = (SSLSocket) factory.createSocket(host, port)) {
+                socket.startHandshake();
+                
+                PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+                out.print(uri.toString() + "\r\n");
+                out.flush();
+                
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                String header = in.readLine();
+                if (header == null) throw new IOException("No response from Gemini server");
+                
+                if (header.startsWith("2")) { // Success
+                    StringBuilder content = new StringBuilder();
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        content.append(line).append("\n");
+                    }
+                    return content.toString();
+                } else {
+                    throw new IOException("Gemini server returned error: " + header);
+                }
             }
+        } catch (Exception e) {
+            throw new IOException("Failed to setup SSL for Gemini: " + e.getMessage(), e);
         }
     }
 
