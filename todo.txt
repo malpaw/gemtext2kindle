@@ -1,1 +1,3 @@
+[ ] Revisit the feed.txt format again. It appears it indeed keeps all the articles, and marks the read ones... somehow
+[ ] Understand, where to get the feed name and author from, and make sure it is added to the .gmi file Front Matter
 [ ] Refactor the namespace of the project to io.malpaw.gemtext2kindle
