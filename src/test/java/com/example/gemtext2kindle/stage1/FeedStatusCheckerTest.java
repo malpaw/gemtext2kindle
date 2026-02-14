@@ -9,10 +9,9 @@ public class FeedStatusCheckerTest {
     public void shouldDetermineIfEntryNeedsDownload() {
         FeedStatusChecker checker = new FeedStatusChecker();
         
-        FeedEntry unread = new FeedEntry("1", 100L, 0L, "url", "title");
-        FeedEntry read = new FeedEntry("1", 100L, 200L, "url", "title");
+        FeedEntry anyEntry = new FeedEntry("1", 100L, 200L, "url", "title");
         
-        assertThat(checker.needsDownload(unread)).isTrue();
-        assertThat(checker.needsDownload(read)).isFalse();
+        // Presence in the file now implies unread status
+        assertThat(checker.needsDownload(anyEntry)).isTrue();
     }
 }

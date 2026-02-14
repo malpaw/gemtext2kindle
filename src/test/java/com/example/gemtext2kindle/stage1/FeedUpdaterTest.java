@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FeedUpdaterTest {
 
     @Test
-    public void shouldUpdateProcessedTimestamp(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+    public void shouldDeleteProcessedEntries(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
         Path feedsPath = tempDir.resolve("feeds.txt");
         Files.writeString(feedsPath, 
             "123\n" +
@@ -20,25 +20,33 @@ public class FeedUpdaterTest {
             "33\n" +
             "1000\n" +
             "0\n" +
-            "gemini://example.com/unread\n" +
+            "gemini://example.com/to-delete\n" +
             "Title\n" +
             "33\n" +
             "2000\n" +
             "9999\n" +
-            "gemini://example.com/read\n" +
+            "gemini://example.com/to-keep\n" +
             "Title2"
         );
         
         FeedUpdater updater = new FeedUpdater();
-        updater.markAsRead(feedsPath, "gemini://example.com/unread");
+        updater.removeEntries(feedsPath, List.of("gemini://example.com/to-delete"));
         
         List<String> lines = Files.readAllLines(feedsPath);
-        // Find line after the unread URL's position. 
-        // Index 6 should be the timestamp for the first entry.
-        assertThat(lines.get(6)).isNotEqualTo("0");
-        assertThat(Long.parseLong(lines.get(6))).isGreaterThan(1000L);
+        assertThat(lines).hasSize(9); // 1 (ts) + 2 (feeds) + 1 (entries header) + 5 (remaining entry)
+        assertThat(String.join("\n", lines)).doesNotContain("gemini://example.com/to-delete");
+        assertThat(String.join("\n", lines)).contains("gemini://example.com/to-keep");
+    }
+
+    @Test
+    public void shouldUpdateGlobalTimestamp(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+        Path feedsPath = tempDir.resolve("feeds.txt");
+        Files.writeString(feedsPath, "100\n# Feeds\n...");
         
-        // Ensure read one didn't change
-        assertThat(lines.get(11)).isEqualTo("9999");
+        FeedUpdater updater = new FeedUpdater();
+        updater.updateGlobalTimestamp(feedsPath);
+        
+        List<String> lines = Files.readAllLines(feedsPath);
+        assertThat(Long.parseLong(lines.get(0))).isGreaterThan(100L);
     }
 }

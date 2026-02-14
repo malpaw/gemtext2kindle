@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FetcherMain {
@@ -17,7 +18,6 @@ public class FetcherMain {
         Path feedsPath = Path.of(args[0]);
         Path outputDir = Path.of(args[1]);
         
-        // Use RealProtocolClient by default
         run(feedsPath, outputDir, new RealProtocolClient());
     }
 
@@ -31,6 +31,8 @@ public class FetcherMain {
         FeedUpdater updater = new FeedUpdater();
         FeedStatusChecker checker = new FeedStatusChecker();
         
+        List<String> processedUrls = new ArrayList<>();
+
         for (FeedEntry entry : entries) {
             if (checker.needsDownload(entry)) {
                 System.out.println("Fetching new entry: " + entry.url());
@@ -40,12 +42,17 @@ public class FetcherMain {
                     Files.writeString(outputDir.resolve(fileName), articleContent);
                     
                     System.out.println("Success: " + fileName);
-                    updater.markAsRead(feedsPath, entry.url());
+                    processedUrls.add(entry.url());
                 } catch (Exception e) {
                     System.err.println("Failed to fetch " + entry.url() + ": " + e.getMessage());
                 }
             }
         }
+
+        if (!processedUrls.isEmpty()) {
+            updater.removeEntries(feedsPath, processedUrls);
+        }
+        updater.updateGlobalTimestamp(feedsPath);
     }
 
     private static String sanitizeFileName(String url) {
