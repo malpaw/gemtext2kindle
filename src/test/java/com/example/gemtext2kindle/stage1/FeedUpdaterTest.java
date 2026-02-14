@@ -10,32 +10,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FeedUpdaterTest {
 
     @Test
-    public void shouldDeleteProcessedEntries(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+    public void shouldNotDeleteProcessedEntriesInLagrangeMode(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
         Path feedsPath = tempDir.resolve("feeds.txt");
-        Files.writeString(feedsPath, 
-            "123\n" +
-            "# Feeds\n" +
-            "33 url\n" +
-            "# Entries\n" +
-            "33\n" +
-            "1000\n" +
-            "0\n" +
-            "gemini://example.com/to-delete\n" +
-            "Title\n" +
-            "33\n" +
-            "2000\n" +
-            "9999\n" +
-            "gemini://example.com/to-keep\n" +
-            "Title2"
-        );
+        String initialContent = "123\n" +
+                "# Feeds\n" +
+                "33 url\n" +
+                "# Entries\n" +
+                "33\n" +
+                "1000\n" +
+                "0\n" +
+                "gemini://example.com/to-delete\n" +
+                "Title\n" +
+                "33\n" +
+                "2000\n" +
+                "9999\n" +
+                "gemini://example.com/to-keep\n" +
+                "Title2";
+        Files.writeString(feedsPath, initialContent);
         
         FeedUpdater updater = new FeedUpdater();
+        // In Lagrange mode, removeEntries is a no-op because unread state is handled by visited.2.txt
         updater.removeEntries(feedsPath, List.of("gemini://example.com/to-delete"));
         
         List<String> lines = Files.readAllLines(feedsPath);
-        assertThat(lines).hasSize(9); // 1 (ts) + 2 (feeds) + 1 (entries header) + 5 (remaining entry)
-        assertThat(String.join("\n", lines)).doesNotContain("gemini://example.com/to-delete");
-        assertThat(String.join("\n", lines)).contains("gemini://example.com/to-keep");
+        assertThat(lines).hasSize(14); 
+        assertThat(String.join("\n", lines)).contains("gemini://example.com/to-delete");
     }
 
     @Test
