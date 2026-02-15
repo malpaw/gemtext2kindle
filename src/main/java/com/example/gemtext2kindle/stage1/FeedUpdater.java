@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,5 +22,19 @@ public class FeedUpdater {
             lines.set(0, String.valueOf(System.currentTimeMillis() / 1000L));
             Files.write(feedsPath, lines, StandardCharsets.UTF_8);
         }
+    }
+
+    public void appendEntries(Path feedsPath, List<FeedEntry> newEntries) throws IOException {
+        if (newEntries.isEmpty()) return;
+        
+        StringBuilder sb = new StringBuilder();
+        for (FeedEntry entry : newEntries) {
+            sb.append(entry.feedId()).append("\n")
+              .append(entry.timestamp1()).append("\n")
+              .append(entry.timestamp2()).append("\n")
+              .append(entry.url()).append("\n")
+              .append(entry.title()).append("\n");
+        }
+        Files.writeString(feedsPath, sb.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
     }
 }

@@ -6,8 +6,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FetcherMain {
@@ -33,21 +35,54 @@ public class FetcherMain {
         String content = Files.readString(feedsPath, StandardCharsets.UTF_8);
         FeedParser parser = new FeedParser();
         List<Feed> feeds = parser.parse(content);
-        List<FeedEntry> entries = parser.parseEntries(content);
+        List<FeedEntry> existingEntries = parser.parseEntries(content);
         
+        // --- Discovery Phase ---
+        System.out.println("Starting feed discovery...");
+        FeedDiscovery discovery = new FeedDiscovery();
+        FeedUpdater updater = new FeedUpdater();
+        List<FeedEntry> allDiscovered = new ArrayList<>();
+        Set<String> existingUrls = existingEntries.stream()
+                .map(FeedEntry::url)
+                .collect(Collectors.toSet());
+
+        for (Feed feed : feeds) {
+            try {
+                String feedContent = client.fetch(feed.url());
+                List<FeedEntry> discovered = discovery.discover(feed, feedContent);
+                for (FeedEntry de : discovered) {
+                    if (!existingUrls.contains(de.url())) {
+                        allDiscovered.add(de);
+                        existingUrls.add(de.url());
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to discover from " + feed.url() + ": " + e.getMessage());
+            }
+        }
+        
+        if (!allDiscovered.isEmpty()) {
+            System.out.println("Discovered " + allDiscovered.size() + " new items.");
+            updater.appendEntries(feedsPath, allDiscovered);
+            // Reload entries to include newly discovered ones
+            content = Files.readString(feedsPath, StandardCharsets.UTF_8);
+            existingEntries = parser.parseEntries(content);
+        } else {
+            System.out.println("No new items discovered.");
+        }
+
         Map<String, String> feedMap = feeds.stream()
                 .collect(Collectors.toMap(Feed::id, Feed::url));
 
-        FeedUpdater updater = new FeedUpdater();
         FeedStatusChecker checker = new FeedStatusChecker(visitedStore);
         
         List<String> processedUrls = new ArrayList<>();
 
-        int totalItems = entries.size();
+        int totalItems = existingEntries.size();
         int estimatedItems = 0;
         int actualDownloaded = 0;
 
-        for (FeedEntry entry : entries) {
+        for (FeedEntry entry : existingEntries) {
             if (checker.needsDownload(entry)) {
                 estimatedItems++;
                 System.out.println("Fetching new entry: " + entry.url());

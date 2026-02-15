@@ -3,6 +3,7 @@ package com.example.gemtext2kindle.stage1;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -41,30 +42,34 @@ public class RealProtocolClient implements ProtocolClient {
             }, new java.security.SecureRandom());
             SSLSocketFactory factory = sc.getSocketFactory();
             
-            try (SSLSocket socket = (SSLSocket) factory.createSocket(host, port)) {
-                socket.startHandshake();
-                
-                PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
-                out.print(uri.toString() + "\r\n");
-                out.flush();
-                
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                String header = in.readLine();
-                if (header == null) throw new IOException("No response from Gemini server");
-                
-                if (header.startsWith("2")) { // Success
-                    StringBuilder content = new StringBuilder();
-                    String line;
-                    while ((line = in.readLine()) != null) {
-                        content.append(line).append("\n");
+            try (Socket baseSocket = new Socket()) {
+                baseSocket.connect(new InetSocketAddress(host, port), 3000); // 3s connect timeout
+                try (SSLSocket socket = (SSLSocket) factory.createSocket(baseSocket, host, port, true)) {
+                    socket.setSoTimeout(3000); // 3s read timeout
+                    socket.startHandshake();
+                    
+                    PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+                    out.print(uri.toString() + "\r\n");
+                    out.flush();
+                    
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                    String header = in.readLine();
+                    if (header == null) throw new IOException("No response from Gemini server");
+                    
+                    if (header.startsWith("2")) { // Success
+                        StringBuilder content = new StringBuilder();
+                        String line;
+                        while ((line = in.readLine()) != null) {
+                            content.append(line).append("\n");
+                        }
+                        return content.toString();
+                    } else {
+                        throw new IOException("Gemini server returned error: " + header);
                     }
-                    return content.toString();
-                } else {
-                    throw new IOException("Gemini server returned error: " + header);
                 }
             }
         } catch (Exception e) {
-            throw new IOException("Failed to setup SSL for Gemini: " + e.getMessage(), e);
+            throw new IOException("Failed to fetch from Gemini server: " + e.getMessage(), e);
         }
     }
 
@@ -74,7 +79,9 @@ public class RealProtocolClient implements ProtocolClient {
         String path = uri.getPath();
         if (path.isEmpty()) path = "/";
         
-        try (Socket socket = new Socket(host, port)) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), 3000); // 3s connect timeout
+            socket.setSoTimeout(3000); // 3s read timeout
             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
             out.print(path + "\r\n");
             out.flush();
