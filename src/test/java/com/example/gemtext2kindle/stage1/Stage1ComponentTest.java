@@ -40,7 +40,7 @@ public class Stage1ComponentTest {
 
         // Verify queue 1 contents
         try (Stream<Path> files = Files.list(q1Dir)) {
-            assertThat(files.count()).isEqualTo(2);
+            assertThat(files.count()).isEqualTo(3); // 2 standard + 1 generated from feed1 base URL via Algorithm B (Headings)
         }
 
         // Verify visited.2.txt was created and contains the two URLs
@@ -52,7 +52,7 @@ public class Stage1ComponentTest {
         String updatedContent = Files.readString(feedsPath, StandardCharsets.UTF_8);
         FeedParser parser = new FeedParser();
         var entries = parser.parseEntries(updatedContent);
-        assertThat(entries).hasSize(2);
+        assertThat(entries).hasSize(3); // 2 original + 1 discovered from base URL heading
         
         // Verify global timestamp was updated
         assertThat(Long.parseLong(updatedContent.split("\n")[0])).isGreaterThan(100L);

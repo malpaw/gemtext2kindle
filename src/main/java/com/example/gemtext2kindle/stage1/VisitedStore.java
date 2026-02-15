@@ -12,7 +12,7 @@ public class VisitedStore {
     private final Path visitedPath;
     private final Map<String, Visit> visits = new HashMap<>();
 
-    public record Visit(long timestamp, int flags) {}
+    public record Visit(long timestamp, int flags, String url) {}
 
     public VisitedStore(Path visitedPath) throws IOException {
         this.visitedPath = visitedPath;
@@ -27,16 +27,11 @@ public class VisitedStore {
     }
 
     public void parseContent(String content) {
+        VisitedStoreParser parser = new VisitedStoreParser();
         for (String line : content.split("\n")) {
-            if (line.trim().isEmpty()) continue;
-            String[] parts = line.split(" ", 3);
-            if (parts.length == 3) {
-                try {
-                    long ts = Long.parseLong(parts[0]);
-                    int flags = Integer.parseInt(parts[1], 16);
-                    String url = parts[2].trim();
-                    visits.put(url, new Visit(ts, flags));
-                } catch (NumberFormatException ignored) {}
+            Visit v = parser.parseLine(line);
+            if (v != null) {
+                visits.put(v.url(), v);
             }
         }
     }
@@ -66,7 +61,7 @@ public class VisitedStore {
     }
 
     private void addVisitInternal(String url, long timestamp, int flags) throws IOException {
-        visits.put(url, new Visit(timestamp, flags));
+        visits.put(url, new Visit(timestamp, flags, url));
         
         String line = String.format("%d %04x %s\n", timestamp, flags, url);
         Files.writeString(visitedPath, line, StandardCharsets.UTF_8, 
