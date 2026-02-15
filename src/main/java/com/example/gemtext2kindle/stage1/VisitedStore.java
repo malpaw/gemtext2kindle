@@ -55,9 +55,20 @@ public class VisitedStore {
         long now = System.currentTimeMillis() / 1000L;
         int flags = 0x0002; // kept_VisitedUrlFlag
         
-        visits.put(url, new Visit(now, flags));
+        // If it's a fragment URL, we also need to update the base URL's timestamp 
+        // so Algorithm B (FeedStatusChecker) works correctly.
+        if (url.contains("#")) {
+            String baseUrl = url.substring(0, url.indexOf("#"));
+            addVisitInternal(baseUrl, now, flags);
+        }
         
-        String line = String.format("%d %04x %s\n", now, flags, url);
+        addVisitInternal(url, now, flags);
+    }
+
+    private void addVisitInternal(String url, long timestamp, int flags) throws IOException {
+        visits.put(url, new Visit(timestamp, flags));
+        
+        String line = String.format("%d %04x %s\n", timestamp, flags, url);
         Files.writeString(visitedPath, line, StandardCharsets.UTF_8, 
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
