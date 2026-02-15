@@ -43,8 +43,13 @@ public class FetcherMain {
         
         List<String> processedUrls = new ArrayList<>();
 
+        int totalItems = entries.size();
+        int estimatedItems = 0;
+        int actualDownloaded = 0;
+
         for (FeedEntry entry : entries) {
             if (checker.needsDownload(entry)) {
+                estimatedItems++;
                 System.out.println("Fetching new entry: " + entry.url());
                 try {
                     String articleContent = client.fetch(entry.url());
@@ -58,6 +63,7 @@ public class FetcherMain {
                     Files.writeString(outputDir.resolve(fileName), fullContent);
                     
                     System.out.println("Success: " + fileName);
+                    actualDownloaded++;
                     
                     // Mark as visited
                     visitedStore.addVisit(entry.url());
@@ -67,6 +73,10 @@ public class FetcherMain {
                 }
             }
         }
+
+        System.out.println("Total items in the feed: " + totalItems);
+        System.out.println("Estimated items to download: " + estimatedItems);
+        System.out.println("Actual number of items downloaded: " + actualDownloaded);
 
         if (!processedUrls.isEmpty()) {
             updater.removeEntries(feedsPath, processedUrls);
