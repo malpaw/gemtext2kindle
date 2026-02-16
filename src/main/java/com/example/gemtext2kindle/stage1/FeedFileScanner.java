@@ -28,9 +28,11 @@ public class FeedFileScanner {
         Optional<Integer> end = nextSection != null ? findSection(nextSection) : Optional.of(lines.size());
         int endIndex = end.orElse(lines.size());
 
+        boolean isEntriesSection = "# Entries".equals(currentSection);
+
         for (int i = start.get() + 1; i < endIndex; i++) {
             String line = lines.get(i);
-            if (!line.isBlank()) {
+            if (isEntriesSection || !line.isBlank()) {
                 result.add(line);
             }
         }

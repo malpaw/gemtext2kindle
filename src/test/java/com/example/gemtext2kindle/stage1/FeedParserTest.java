@@ -87,4 +87,38 @@ public class FeedParserTest {
         assertThat(entries.get(0).url()).isEqualTo("gemini://example.com/post1.gmi");
         assertThat(entries.get(1).url()).isEqualTo("gemini://example.com/post2.gmi");
     }
+
+    @Test
+    public void shouldParseEntryWithEmptyTitle() {
+        // Test case where the 5th line (title) of an entry block is a space
+        String content =
+                "5a\n" +
+                "1771197987\n" +
+                "1771197987\n" +
+                "https://boston.conman.org/2026/01/31.1\n" +
+                " "; // Line with space
+
+        FeedParser parser = new FeedParser();
+        FeedEntry entry = parser.parseEntry(content);
+
+        assertThat(entry.url()).isEqualTo("https://boston.conman.org/2026/01/31.1");
+        assertThat(entry.title()).isEmpty();
+    }
+
+    @Test
+    public void shouldParseEntryWithCompletelyEmptyTitle() {
+        // Test case where the 5th line (title) is completely empty (no spaces)
+        String content =
+                "5a\n" +
+                "1771197987\n" +
+                "1771197987\n" +
+                "https://boston.conman.org/2026/01/31.1\n" +
+                ""; // Completely empty line
+
+        FeedParser parser = new FeedParser();
+        FeedEntry entry = parser.parseEntry(content);
+
+        assertThat(entry.url()).isEqualTo("https://boston.conman.org/2026/01/31.1");
+        assertThat(entry.title()).isEmpty();
+    }
 }
