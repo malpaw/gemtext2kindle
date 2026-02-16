@@ -13,6 +13,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class RealProtocolClient implements ProtocolClient {
+    private static final int CONNECTION_TIMEOUT = 1000; // 2 seconds
 
     @Override
     public String fetch(String url) throws IOException {
@@ -43,9 +44,9 @@ public class RealProtocolClient implements ProtocolClient {
             SSLSocketFactory factory = sc.getSocketFactory();
             
             try (Socket baseSocket = new Socket()) {
-                baseSocket.connect(new InetSocketAddress(host, port), 3000); // 3s connect timeout
+                baseSocket.connect(new InetSocketAddress(host, port), CONNECTION_TIMEOUT); 
                 try (SSLSocket socket = (SSLSocket) factory.createSocket(baseSocket, host, port, true)) {
-                    socket.setSoTimeout(3000); // 3s read timeout
+                    socket.setSoTimeout(CONNECTION_TIMEOUT); 
                     socket.startHandshake();
                     
                     PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
@@ -80,8 +81,8 @@ public class RealProtocolClient implements ProtocolClient {
         if (path.isEmpty()) path = "/";
         
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, port), 3000); // 3s connect timeout
-            socket.setSoTimeout(3000); // 3s read timeout
+            socket.connect(new InetSocketAddress(host, port), CONNECTION_TIMEOUT); 
+            socket.setSoTimeout(CONNECTION_TIMEOUT); 
             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
             out.print(path + "\r\n");
             out.flush();
