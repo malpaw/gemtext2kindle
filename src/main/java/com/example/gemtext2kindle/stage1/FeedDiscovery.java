@@ -13,6 +13,20 @@ import java.util.regex.Pattern;
 public class FeedDiscovery {
 
     private static final Pattern LINK_DATE_PATTERN = Pattern.compile("^=>\\s*([^\\s]+)\\s+([0-9]{4}-[0-1][0-9]-[0-3][0-9])\\s*(.*)$");
+    private static final Pattern GEMTEXT_H1_PATTERN = Pattern.compile("^#\\s+(.+)$", Pattern.MULTILINE);
+    private static final Pattern XML_TITLE_PATTERN = Pattern.compile("<title>(.*?)</title>");
+
+    public String discoverTitle(String content) {
+        if (content == null || content.isBlank()) return null;
+        if (isXml(content)) {
+            Matcher m = XML_TITLE_PATTERN.matcher(content);
+            if (m.find()) return m.group(1).trim();
+        } else {
+            Matcher m = GEMTEXT_H1_PATTERN.matcher(content);
+            if (m.find()) return m.group(1).trim();
+        }
+        return null;
+    }
 
     public List<FeedEntry> discover(Feed feed, String content) {
         List<FeedEntry> entries = new ArrayList<>();

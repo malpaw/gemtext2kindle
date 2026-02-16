@@ -36,7 +36,7 @@ public class Stage1ComponentTest {
         Files.createDirectories(q1Dir);
 
         // Run fetcher with GeneratorProtocolClient
-        FetcherMain.run(feedsPath, visitedPath, q1Dir, new GeneratorProtocolClient());
+        FetcherMain.run(feedsPath, visitedPath, q1Dir, null, new GeneratorProtocolClient());
 
         // Verify queue 1 contents
         try (Stream<Path> files = Files.list(q1Dir)) {
@@ -60,7 +60,7 @@ public class Stage1ComponentTest {
         // Run fetcher AGAIN - should fetch 0 articles this time because they are visited
         Path q2Dir = tempDir.resolve("queue2");
         Files.createDirectories(q2Dir);
-        FetcherMain.run(feedsPath, visitedPath, q2Dir, new GeneratorProtocolClient());
+        FetcherMain.run(feedsPath, visitedPath, q2Dir, null, new GeneratorProtocolClient());
         try (Stream<Path> files = Files.list(q2Dir)) {
             assertThat(files.count()).isEqualTo(0);
         }

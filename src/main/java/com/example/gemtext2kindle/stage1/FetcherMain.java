@@ -16,18 +16,19 @@ public class FetcherMain {
 
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
-            System.err.println("Usage: FetcherMain <feeds.txt path> <visited.2.txt path> <output queue dir>");
+            System.err.println("Usage: FetcherMain <feeds.txt path> <visited.2.txt path> <output queue dir> [bookmarks.ini path]");
             System.exit(1);
         }
 
         Path feedsPath = Path.of(args[0]);
         Path visitedPath = Path.of(args[1]);
         Path outputDir = Path.of(args[2]);
+        Path bookmarksPath = args.length > 3 ? Path.of(args[3]) : null;
         
-        run(feedsPath, visitedPath, outputDir, new RealProtocolClient());
+        run(feedsPath, visitedPath, outputDir, bookmarksPath, new RealProtocolClient());
     }
 
-    public static void run(Path feedsPath, Path visitedPath, Path outputDir, ProtocolClient client) throws IOException {
+    public static void run(Path feedsPath, Path visitedPath, Path outputDir, Path bookmarksPath, ProtocolClient client) throws IOException {
         Files.createDirectories(outputDir);
 
         VisitedStore visitedStore = new VisitedStore(visitedPath);
@@ -36,6 +37,12 @@ public class FetcherMain {
         FeedParser parser = new FeedParser();
         List<Feed> feeds = parser.parse(content);
         List<FeedEntry> existingEntries = parser.parseEntries(content);
+
+        Map<String, String> bookmarks = new java.util.HashMap<>();
+        if (bookmarksPath != null && Files.exists(bookmarksPath)) {
+            System.out.println("Loading bookmarks from " + bookmarksPath);
+            bookmarks = new BookmarkParser().parse(Files.readString(bookmarksPath, StandardCharsets.UTF_8));
+        }
         
         // --- Discovery Phase ---
         System.out.println("Starting feed discovery...");
@@ -46,9 +53,17 @@ public class FetcherMain {
                 .map(FeedEntry::url)
                 .collect(Collectors.toSet());
 
+        java.util.Map<String, String> discoveredFeedTitles = new java.util.HashMap<>();
+
         for (Feed feed : feeds) {
             try {
                 String feedContent = client.fetch(feed.url());
+                
+                String discoveredTitle = discovery.discoverTitle(feedContent);
+                if (discoveredTitle != null && !discoveredTitle.isBlank()) {
+                    discoveredFeedTitles.put(feed.id(), discoveredTitle);
+                }
+
                 List<FeedEntry> discovered = discovery.discover(feed, feedContent);
                 for (FeedEntry de : discovered) {
                     if (!existingUrls.contains(de.url())) {
@@ -89,8 +104,13 @@ public class FetcherMain {
                 try {
                     String articleContent = client.fetch(entry.url());
                     
-                    String feedUrl = feedMap.getOrDefault(entry.feedId(), "Unknown Feed");
-                    ArticleMetadata meta = new ArticleMetadata(feedUrl, entry.title(), entry.timestamp1(), entry.url());
+                    // Priority: 1. bookmarks.ini, 2. discovered title (H1/XML), 3. fallback to feed URL
+                    String feedDisplayName = bookmarks.get(entry.feedId());
+                    if (feedDisplayName == null) {
+                        feedDisplayName = discoveredFeedTitles.getOrDefault(entry.feedId(), feedMap.getOrDefault(entry.feedId(), "Unknown Feed"));
+                    }
+                    
+                    ArticleMetadata meta = new ArticleMetadata(feedDisplayName, entry.title(), entry.timestamp1(), entry.url());
                     
                     String fullContent = meta.serialize() + articleContent;
                     

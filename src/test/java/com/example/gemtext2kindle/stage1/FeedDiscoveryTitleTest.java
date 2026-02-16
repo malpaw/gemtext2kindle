@@ -92,4 +92,20 @@ public class FeedDiscoveryTitleTest {
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).title()).isEqualTo("Some Title");
     }
+
+    @Test
+    public void shouldDiscoverFeedTitleFromGemtext() {
+        FeedDiscovery discovery = new FeedDiscovery();
+        String content = "Welcome to my log\n# My Awesome Log\n=> /posts/1.gmi 2026-02-15 Post 1";
+        String title = discovery.discoverTitle(content);
+        assertThat(title).isEqualTo("My Awesome Log");
+    }
+
+    @Test
+    public void shouldDiscoverFeedTitleFromXml() {
+        FeedDiscovery discovery = new FeedDiscovery();
+        String content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<feed><title>Atom Feed Title</title><entry>...</entry></feed>";
+        String title = discovery.discoverTitle(content);
+        assertThat(title).isEqualTo("Atom Feed Title");
+    }
 }
