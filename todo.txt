@@ -1,6 +1,7 @@
 [x] Revisit the feed.txt format again. It appears it indeed keeps all the articles, and marks the read ones... somehow
   [x] It still does not save (or read?) the visited links correctly.
-[ ] Make sure we refresh the list of feeds from internet.
-[ ] Add the repo to github
+[x] Make sure we refresh the list of feeds from internet.
+[x] Add the repo to github
 [ ] Understand, where to get the feed name and author from, and make sure it is added to the .gmi file Front Matter
 [ ] Refactor the namespace of the project to io.malpaw.gemtext2kindle
+[ ] Handle 404 for gopher: Error: File or directory not found! (null) (is there any smarter way than this?)
