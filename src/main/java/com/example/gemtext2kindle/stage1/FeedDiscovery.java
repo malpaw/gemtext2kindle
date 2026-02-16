@@ -30,7 +30,7 @@ public class FeedDiscovery {
 
     public List<FeedEntry> discover(Feed feed, String content) {
         List<FeedEntry> entries = new ArrayList<>();
-        if (content == null || content.isBlank()) return entries;
+        if (feed == null || content == null || content.isBlank()) return entries;
 
         try {
             if (isXml(content)) {
@@ -126,7 +126,7 @@ public class FeedDiscovery {
     }
 
     private String normalizeFeedId(String id) {
-        if (id == null) return null;
+        if (id == null) return "";
         try {
             // Convert hex string to long and back to hex to remove leading zeros
             return Long.toHexString(Long.parseLong(id, 16));
@@ -136,6 +136,7 @@ public class FeedDiscovery {
     }
 
     private String resolveUrl(String baseUrl, String relativeUrl) {
+        if (baseUrl == null) return relativeUrl;
         try {
             return URI.create(baseUrl).resolve(relativeUrl).toString();
         } catch (Exception e) {

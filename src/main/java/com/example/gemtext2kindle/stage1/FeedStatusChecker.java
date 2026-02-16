@@ -9,9 +9,10 @@ public class FeedStatusChecker {
 
     public boolean needsDownload(FeedEntry entry) {
         if (entry == null) return false;
+        if (visitedStore == null) return true;
 
         String url = entry.url();
-        if (url.contains("#")) {
+        if (url != null && url.contains("#")) {
             // Algorithm B: Heading/Fragment Entries
             String baseUrl = url.substring(0, url.indexOf("#"));
             long visTime = visitedStore.getVisitTime(baseUrl);

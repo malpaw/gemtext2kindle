@@ -63,4 +63,19 @@ public class FeedDiscoveryTest {
         assertThat(entries.get(0).title()).isEqualTo("Mailing list downtime");
         assertThat(entries.get(0).timestamp1()).isEqualTo(1642291200L); // 2022-01-16
     }
+
+    @Test
+    public void shouldHandleNullOrEmptyInputs() {
+        FeedDiscovery discovery = new FeedDiscovery();
+        Feed feed = new Feed("1", "gemini://example.com/");
+        
+        assertThat(discovery.discoverTitle(null)).isNull();
+        assertThat(discovery.discoverTitle("")).isNull();
+        assertThat(discovery.discoverTitle("  ")).isNull();
+        
+        assertThat(discovery.discover(null, "content")).isEmpty();
+        assertThat(discovery.discover(feed, null)).isEmpty();
+        assertThat(discovery.discover(feed, "")).isEmpty();
+        assertThat(discovery.discover(feed, "  ")).isEmpty();
+    }
 }

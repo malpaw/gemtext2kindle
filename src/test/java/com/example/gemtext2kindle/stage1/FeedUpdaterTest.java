@@ -48,4 +48,22 @@ public class FeedUpdaterTest {
         List<String> lines = Files.readAllLines(feedsPath);
         assertThat(Long.parseLong(lines.get(0))).isGreaterThan(100L);
     }
+
+    @Test
+    public void shouldHandleNullInputs(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+        FeedUpdater updater = new FeedUpdater();
+        Path feedsPath = tempDir.resolve("feeds.txt");
+        Files.writeString(feedsPath, "100\n# Feeds\n...\n# Entries\n");
+
+        // Should not throw
+        updater.removeEntries(null, List.of("url"));
+        updater.removeEntries(feedsPath, null);
+        updater.removeEntries(feedsPath, List.of());
+        
+        updater.updateGlobalTimestamp(null);
+        
+        updater.appendEntries(null, List.of(new FeedEntry("1", 0, 0, "u", "t")));
+        updater.appendEntries(feedsPath, null);
+        updater.appendEntries(feedsPath, List.of());
+    }
 }

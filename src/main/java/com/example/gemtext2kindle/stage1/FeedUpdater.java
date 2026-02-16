@@ -17,6 +17,7 @@ public class FeedUpdater {
     }
 
     public void updateGlobalTimestamp(Path feedsPath) throws IOException {
+        if (feedsPath == null || !Files.exists(feedsPath)) return;
         List<String> lines = Files.readAllLines(feedsPath, StandardCharsets.UTF_8);
         if (!lines.isEmpty()) {
             lines.set(0, String.valueOf(System.currentTimeMillis() / 1000L));
@@ -25,7 +26,7 @@ public class FeedUpdater {
     }
 
     public void appendEntries(Path feedsPath, List<FeedEntry> newEntries) throws IOException {
-        if (newEntries.isEmpty()) return;
+        if (feedsPath == null || newEntries == null || newEntries.isEmpty()) return;
         
         StringBuilder sb = new StringBuilder();
         for (FeedEntry entry : newEntries) {

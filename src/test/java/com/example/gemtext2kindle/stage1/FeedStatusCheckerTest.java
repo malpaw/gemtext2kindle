@@ -54,4 +54,13 @@ public class FeedStatusCheckerTest {
         store.parseContent("1730494395 0002 gemini://sud0nim.smol.pub/glog");
         assertThat(checker.needsDownload(visitedFragmentEntry)).isTrue(); // 1730494396 > 1730494395
     }
+
+    @Test
+    public void shouldHandleNullInputs() {
+        FeedStatusChecker checker = new FeedStatusChecker(null);
+        assertThat(checker.needsDownload(null)).isFalse();
+        
+        FeedEntry entry = new FeedEntry("1", 0, 0, "u", "t");
+        assertThat(checker.needsDownload(entry)).isTrue(); // null store means not visited
+    }
 }

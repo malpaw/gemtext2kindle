@@ -12,8 +12,9 @@ public class FeedFileScanner {
     }
 
     public Optional<Integer> findSection(String sectionHeader) {
+        if (lines == null || sectionHeader == null) return Optional.empty();
         for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).trim().startsWith(sectionHeader)) {
+            if (lines.get(i) != null && lines.get(i).trim().startsWith(sectionHeader)) {
                 return Optional.of(i);
             }
         }
@@ -22,6 +23,8 @@ public class FeedFileScanner {
 
     public List<String> getLinesInSection(String currentSection, String nextSection) {
         List<String> result = new ArrayList<>();
+        if (lines == null || currentSection == null) return result;
+        
         Optional<Integer> start = findSection(currentSection);
         if (start.isEmpty()) return result;
 
@@ -32,7 +35,7 @@ public class FeedFileScanner {
 
         for (int i = start.get() + 1; i < endIndex; i++) {
             String line = lines.get(i);
-            if (isEntriesSection || !line.isBlank()) {
+            if (isEntriesSection || (line != null && !line.isBlank())) {
                 result.add(line);
             }
         }
