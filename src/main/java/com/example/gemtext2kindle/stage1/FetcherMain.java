@@ -90,7 +90,7 @@ public class FetcherMain {
                     String articleContent = client.fetch(entry.url());
                     
                     String feedUrl = feedMap.getOrDefault(entry.feedId(), "Unknown Feed");
-                    ArticleMetadata meta = new ArticleMetadata(feedUrl, null, entry.title(), entry.timestamp1(), entry.url());
+                    ArticleMetadata meta = new ArticleMetadata(feedUrl, entry.title(), entry.timestamp1(), entry.url());
                     
                     String fullContent = meta.serialize() + articleContent;
                     

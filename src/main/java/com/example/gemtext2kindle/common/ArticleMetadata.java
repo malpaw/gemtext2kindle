@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 
 public record ArticleMetadata(
     String feedName,
-    String author,
     String title,
     long timestamp,
     String url
@@ -18,7 +17,6 @@ public record ArticleMetadata(
     public String serialize() {
         return DELIMITER + "\n" +
                "feed: " + feedName + "\n" +
-               "author: " + (author == null ? "Unknown" : author) + "\n" +
                "title: " + title + "\n" +
                "date: " + FORMATTER.format(Instant.ofEpochSecond(timestamp)) + "\n" +
                "url: " + url + "\n" +
@@ -31,11 +29,10 @@ public record ArticleMetadata(
         }
         
         String[] lines = content.split("\n");
-        String feedName = null, author = null, title = null, url = null, date = null;
+        String feedName = null, title = null, url = null, date = null;
         
         for (String line : lines) {
             if (line.startsWith("feed: ")) feedName = line.substring(6).trim();
-            else if (line.startsWith("author: ")) author = line.substring(8).trim();
             else if (line.startsWith("title: ")) title = line.substring(7).trim();
             else if (line.startsWith("url: ")) url = line.substring(5).trim();
             else if (line.startsWith("date: ")) date = line.substring(6).trim();
@@ -47,6 +44,6 @@ public record ArticleMetadata(
         // Note: For deserialization back to timestamp, we'd need more logic, 
         // but for Stage 2 HTML rendering, the strings are often enough.
         // Keeping it simple for now as requested.
-        return new ArticleMetadata(feedName, author, title, 0, url);
+        return new ArticleMetadata(feedName, title, 0, url);
     }
 }
