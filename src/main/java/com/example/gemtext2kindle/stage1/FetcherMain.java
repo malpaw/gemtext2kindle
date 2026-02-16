@@ -38,7 +38,7 @@ public class FetcherMain {
         List<Feed> feeds = parser.parse(content);
         List<FeedEntry> existingEntries = parser.parseEntries(content);
 
-        Map<String, String> bookmarks = new java.util.HashMap<>();
+        Map<String, BookmarkParser.Bookmark> bookmarks = new java.util.HashMap<>();
         if (bookmarksPath != null && Files.exists(bookmarksPath)) {
             System.out.println("Loading bookmarks from " + bookmarksPath);
             bookmarks = new BookmarkParser().parse(Files.readString(bookmarksPath, StandardCharsets.UTF_8));
@@ -105,12 +105,19 @@ public class FetcherMain {
                     String articleContent = client.fetch(entry.url());
                     
                     // Priority: 1. bookmarks.ini, 2. discovered title (H1/XML), 3. fallback to feed URL
-                    String feedDisplayName = bookmarks.get(entry.feedId());
+                    String feedDisplayName = null;
+                    String feedIcon = null;
+                    BookmarkParser.Bookmark bm = bookmarks.get(entry.feedId());
+                    if (bm != null) {
+                        feedDisplayName = bm.title();
+                        feedIcon = bm.icon();
+                    }
+
                     if (feedDisplayName == null) {
                         feedDisplayName = discoveredFeedTitles.getOrDefault(entry.feedId(), feedMap.getOrDefault(entry.feedId(), "Unknown Feed"));
                     }
                     
-                    ArticleMetadata meta = new ArticleMetadata(feedDisplayName, entry.title(), entry.timestamp1(), entry.url());
+                    ArticleMetadata meta = new ArticleMetadata(feedDisplayName, feedIcon, entry.title(), entry.timestamp1(), entry.url());
                     
                     String fullContent = meta.serialize() + articleContent;
                     
