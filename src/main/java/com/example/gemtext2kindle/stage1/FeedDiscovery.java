@@ -47,12 +47,14 @@ public class FeedDiscovery {
             String url = "";
             Matcher lm = linkPattern.matcher(entryContent);
             if (lm.find()) {
-                url = lm.group(1) != null ? lm.group(1) : lm.group(2);
+                url = lm.group(1) != null ? lm.group(1).trim() : (lm.group(2) != null ? lm.group(2).trim() : "");
             }
 
             String title = "";
             Matcher tm = titlePattern.matcher(entryContent);
-            if (tm.find()) title = tm.group(1);
+            if (tm.find()) title = tm.group(1).trim();
+            
+            if (title.isEmpty()) title = url;
 
             long timestamp = System.currentTimeMillis() / 1000L;
             Matcher dm = datePattern.matcher(entryContent);
@@ -83,6 +85,7 @@ public class FeedDiscovery {
                 String url = resolveUrl(feed.url(), lm.group(1));
                 long posted = parseDate(lm.group(2));
                 String title = lm.group(3).trim();
+                if (title.isEmpty()) title = url;
                 entries.add(new FeedEntry(feedId, posted, now, url, title));
                 continue;
             }

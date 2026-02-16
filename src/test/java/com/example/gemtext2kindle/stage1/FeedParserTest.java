@@ -95,13 +95,13 @@ public class FeedParserTest {
                 "5a\n" +
                 "1771197987\n" +
                 "1771197987\n" +
-                "https://boston.conman.org/2026/01/31.1\n" +
+                "gemini://boston.conman.org/2026/01/31.1\n" +
                 " "; // Line with space
 
         FeedParser parser = new FeedParser();
         FeedEntry entry = parser.parseEntry(content);
 
-        assertThat(entry.url()).isEqualTo("https://boston.conman.org/2026/01/31.1");
+        assertThat(entry.url()).isEqualTo("gemini://boston.conman.org/2026/01/31.1");
         assertThat(entry.title()).isEmpty();
     }
 
@@ -112,13 +112,13 @@ public class FeedParserTest {
                 "5a\n" +
                 "1771197987\n" +
                 "1771197987\n" +
-                "https://boston.conman.org/2026/01/31.1\n" +
+                "gemini://boston.conman.org/2026/01/31.1\n" +
                 ""; // Completely empty line
 
         FeedParser parser = new FeedParser();
         FeedEntry entry = parser.parseEntry(content);
 
-        assertThat(entry.url()).isEqualTo("https://boston.conman.org/2026/01/31.1");
+        assertThat(entry.url()).isEqualTo("gemini://boston.conman.org/2026/01/31.1");
         assertThat(entry.title()).isEmpty();
     }
 }
