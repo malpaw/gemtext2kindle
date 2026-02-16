@@ -12,17 +12,23 @@ public class FeedParser {
     private final EntryBlockParser entryParser = new EntryBlockParser();
 
     public List<Feed> parse(String content) {
+        if (content == null) return new ArrayList<>();
         FeedFileScanner scanner = new FeedFileScanner(List.of(content.split("\n")));
         List<String> feedLines = scanner.getLinesInSection(FEEDS_SECTION, ENTRIES_SECTION);
         List<Feed> feeds = new ArrayList<>();
         for (String line : feedLines) {
-            Feed feed = lineParser.parse(line);
-            if (feed != null) feeds.add(feed);
+            try {
+                Feed feed = lineParser.parse(line);
+                if (feed != null) feeds.add(feed);
+            } catch (Exception e) {
+                System.err.println("Skipping invalid feed line: " + line + " - " + e.getMessage());
+            }
         }
         return feeds;
     }
 
     public List<FeedEntry> parseEntries(String content) {
+        if (content == null) return new ArrayList<>();
         List<String> allLines = List.of(content.split("\n", -1));
         FeedFileScanner scanner = new FeedFileScanner(allLines);
         
@@ -30,7 +36,11 @@ public class FeedParser {
 
         List<FeedEntry> entries = new ArrayList<>();
         for (int i = 0; i + 4 < entryLines.size(); i += 5) {
-            entries.add(entryParser.parse(entryLines.subList(i, i + 5)));
+            try {
+                entries.add(entryParser.parse(entryLines.subList(i, i + 5)));
+            } catch (Exception e) {
+                System.err.println("Skipping invalid entry block at line " + i + " - " + e.getMessage());
+            }
         }
         return entries;
     }

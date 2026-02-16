@@ -121,4 +121,19 @@ public class FeedParserTest {
         assertThat(entry.url()).isEqualTo("gemini://boston.conman.org/2026/01/31.1");
         assertThat(entry.title()).isEmpty();
     }
+
+    @Test
+    public void shouldHandleEmptyContent() {
+        FeedParser parser = new FeedParser();
+        assertThat(parser.parse("")).isEmpty();
+        assertThat(parser.parseEntries("")).isEmpty();
+    }
+
+    @Test
+    public void shouldHandleContentWithoutSections() {
+        FeedParser parser = new FeedParser();
+        String content = "no sections here\njust text";
+        assertThat(parser.parse(content)).isEmpty();
+        assertThat(parser.parseEntries(content)).isEmpty();
+    }
 }

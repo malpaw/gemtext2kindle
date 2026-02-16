@@ -32,4 +32,37 @@ public class BookmarkParserTest {
         assertThat(bookmarks.get("50").title()).isEqualTo("sud0nim's Glog!");
         assertThat(bookmarks.get("50").icon()).isNull();
     }
+
+    @Test
+    public void shouldHandleEmptyContent() {
+        BookmarkParser parser = new BookmarkParser();
+        assertThat(parser.parse("")).isEmpty();
+        assertThat(parser.parse(null)).isEmpty();
+    }
+
+    @Test
+    public void shouldHandleMalformedSections() {
+        BookmarkParser parser = new BookmarkParser();
+        String malformed = "[not-a-number]\ntitle=\"Bad\"\n\n[10]\ntitle=\"Good\"\n";
+        Map<String, BookmarkParser.Bookmark> bookmarks = parser.parse(malformed);
+        assertThat(bookmarks).hasSize(1);
+        assertThat(bookmarks.get("a").title()).isEqualTo("Good");
+    }
+
+    @Test
+    public void shouldHandleMissingFields() {
+        BookmarkParser parser = new BookmarkParser();
+        String missing = "[10]\nurl=\"...\"\n\n[20]\ntitle=\"Only Title\"\n";
+        Map<String, BookmarkParser.Bookmark> bookmarks = parser.parse(missing);
+        assertThat(bookmarks).hasSize(1);
+        assertThat(bookmarks.get("14").title()).isEqualTo("Only Title");
+    }
+
+    @Test
+    public void shouldHandleInvalidIconFormat() {
+        BookmarkParser parser = new BookmarkParser();
+        String content = "[16]\ntitle=\"Test\"\nicon=0xGHIJ\n";
+        Map<String, BookmarkParser.Bookmark> bookmarks = parser.parse(content);
+        assertThat(bookmarks.get("10").icon()).isNull();
+    }
 }

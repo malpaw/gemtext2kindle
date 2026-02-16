@@ -42,4 +42,29 @@ public class EntryBlockParserTest {
         assertThatThrownBy(() -> parser.parse(lines))
             .isInstanceOf(NumberFormatException.class);
     }
+
+    @Test
+    public void shouldHandleNullOrEmptyList() {
+        EntryBlockParser parser = new EntryBlockParser();
+        assertThatThrownBy(() -> parser.parse(null))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> parser.parse(List.of()))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void shouldTrimFields() {
+        List<String> lines = List.of(
+            "  33  ",
+            "  1000  ",
+            "  2000  ",
+            "  url  ",
+            "  title  "
+        );
+        EntryBlockParser parser = new EntryBlockParser();
+        FeedEntry entry = parser.parse(lines);
+        assertThat(entry.feedId()).isEqualTo("33");
+        assertThat(entry.url()).isEqualTo("url");
+        assertThat(entry.title()).isEqualTo("title");
+    }
 }

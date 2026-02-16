@@ -98,41 +98,45 @@ public class FetcherMain {
         int actualDownloaded = 0;
 
         for (FeedEntry entry : existingEntries) {
-            if (checker.needsDownload(entry)) {
-                estimatedItems++;
-                System.out.println("Fetching new entry: " + entry.url());
-                try {
-                    String articleContent = client.fetch(entry.url());
-                    
-                    // Priority: 1. bookmarks.ini, 2. discovered title (H1/XML), 3. fallback to feed URL
-                    String feedDisplayName = null;
-                    String feedIcon = null;
-                    BookmarkParser.Bookmark bm = bookmarks.get(entry.feedId());
-                    if (bm != null) {
-                        feedDisplayName = bm.title();
-                        feedIcon = bm.icon();
-                    }
+            try {
+                if (checker.needsDownload(entry)) {
+                    estimatedItems++;
+                    System.out.println("Fetching new entry: " + entry.url());
+                    try {
+                        String articleContent = client.fetch(entry.url());
+                        
+                        // Priority: 1. bookmarks.ini, 2. discovered title (H1/XML), 3. fallback to feed URL
+                        String feedDisplayName = null;
+                        String feedIcon = null;
+                        BookmarkParser.Bookmark bm = bookmarks.get(entry.feedId());
+                        if (bm != null) {
+                            feedDisplayName = bm.title();
+                            feedIcon = bm.icon();
+                        }
 
-                    if (feedDisplayName == null) {
-                        feedDisplayName = discoveredFeedTitles.getOrDefault(entry.feedId(), feedMap.getOrDefault(entry.feedId(), "Unknown Feed"));
+                        if (feedDisplayName == null) {
+                            feedDisplayName = discoveredFeedTitles.getOrDefault(entry.feedId(), feedMap.getOrDefault(entry.feedId(), "Unknown Feed"));
+                        }
+                        
+                        ArticleMetadata meta = new ArticleMetadata(feedDisplayName, feedIcon, entry.title(), entry.timestamp1(), entry.url());
+                        
+                        String fullContent = (meta != null ? meta.serialize() : "") + articleContent;
+                        
+                        String fileName = sanitizeFileName(entry.url()) + ".gmi";
+                        Files.writeString(outputDir.resolve(fileName), fullContent);
+                        
+                        System.out.println("Success: " + fileName);
+                        actualDownloaded++;
+                        
+                        // Mark as visited
+                        visitedStore.addVisit(entry.url());
+                        processedUrls.add(entry.url());
+                    } catch (Exception e) {
+                        System.err.println("Failed to fetch article " + entry.url() + ": " + e.getMessage());
                     }
-                    
-                    ArticleMetadata meta = new ArticleMetadata(feedDisplayName, feedIcon, entry.title(), entry.timestamp1(), entry.url());
-                    
-                    String fullContent = meta.serialize() + articleContent;
-                    
-                    String fileName = sanitizeFileName(entry.url()) + ".gmi";
-                    Files.writeString(outputDir.resolve(fileName), fullContent);
-                    
-                    System.out.println("Success: " + fileName);
-                    actualDownloaded++;
-                    
-                    // Mark as visited
-                    visitedStore.addVisit(entry.url());
-                    processedUrls.add(entry.url());
-                } catch (Exception e) {
-                    System.err.println("Failed to fetch " + entry.url() + ": " + e.getMessage());
                 }
+            } catch (Exception e) {
+                System.err.println("Error processing entry: " + entry + " - " + e.getMessage());
             }
         }
 

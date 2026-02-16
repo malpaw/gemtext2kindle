@@ -26,7 +26,7 @@ public record ArticleMetadata(
     }
 
     public static ArticleMetadata deserialize(String content) {
-        if (!content.startsWith(DELIMITER)) {
+        if (content == null || !content.startsWith(DELIMITER)) {
             return null;
         }
         

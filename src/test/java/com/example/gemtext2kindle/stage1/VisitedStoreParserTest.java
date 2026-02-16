@@ -41,4 +41,18 @@ public class VisitedStoreParserTest {
         assertThat(parser.parseLine("")).isNull();
         assertThat(parser.parseLine(null)).isNull();
     }
+
+    @Test
+    public void shouldHandleMalformedHexFlags() {
+        VisitedStoreParser parser = new VisitedStoreParser();
+        String line = "1694172824 XXXX gemini://example.com";
+        assertThat(parser.parseLine(line)).isNull();
+    }
+
+    @Test
+    public void shouldHandleMalformedTimestamp() {
+        VisitedStoreParser parser = new VisitedStoreParser();
+        String line = "not-a-timestamp 0000 gemini://example.com";
+        assertThat(parser.parseLine(line)).isNull();
+    }
 }

@@ -14,6 +14,7 @@ public class BookmarkParser {
 
     public Map<String, Bookmark> parse(String content) {
         Map<String, Bookmark> bookmarks = new HashMap<>();
+        if (content == null || content.isBlank()) return bookmarks;
         String[] sections = content.split("(?=\\[\\d+\\])");
         
         for (String section : sections) {

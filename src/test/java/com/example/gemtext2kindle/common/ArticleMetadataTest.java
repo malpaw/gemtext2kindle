@@ -35,4 +35,17 @@ public class ArticleMetadataTest {
         assertThat(deserialized.feedName()).isEqualTo("My Feed");
         assertThat(deserialized.feedIcon()).isNull();
     }
+
+    @Test
+    public void shouldReturnNullOnInvalidFormat() {
+        assertThat(ArticleMetadata.deserialize("invalid")).isNull();
+        assertThat(ArticleMetadata.deserialize("")).isNull();
+        assertThat(ArticleMetadata.deserialize(null)).isNull();
+    }
+
+    @Test
+    public void shouldReturnNullIfFeedNameIsMissing() {
+        String content = "---\ntitle: test\n---\n";
+        assertThat(ArticleMetadata.deserialize(content)).isNull();
+    }
 }

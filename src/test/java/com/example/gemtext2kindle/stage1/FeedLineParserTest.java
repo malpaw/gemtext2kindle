@@ -35,5 +35,14 @@ public class FeedLineParserTest {
     public void shouldReturnNullOnEmptyLine() {
         FeedLineParser parser = new FeedLineParser();
         assertThat(parser.parse("   ")).isNull();
+        assertThat(parser.parse(null)).isNull();
+    }
+
+    @Test
+    public void shouldThrowExceptionOnEmptyIdOrUrl() {
+        FeedLineParser parser = new FeedLineParser();
+        // These will throw because split(" ", 2) will not produce 2 parts if there is no space
+        assertThatThrownBy(() -> parser.parse("onlyid"))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 }

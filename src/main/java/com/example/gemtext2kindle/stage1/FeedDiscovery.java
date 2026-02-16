@@ -32,10 +32,14 @@ public class FeedDiscovery {
         List<FeedEntry> entries = new ArrayList<>();
         if (content == null || content.isBlank()) return entries;
 
-        if (isXml(content)) {
-            entries.addAll(parseXml(feed, content));
-        } else {
-            entries.addAll(parseGemtext(feed, content));
+        try {
+            if (isXml(content)) {
+                entries.addAll(parseXml(feed, content));
+            } else {
+                entries.addAll(parseGemtext(feed, content));
+            }
+        } catch (Exception e) {
+            System.err.println("Error during feed discovery for " + feed.url() + ": " + e.getMessage());
         }
         return entries;
     }
