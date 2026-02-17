@@ -106,8 +106,30 @@ public class EpubAssembler {
                     
                     htmlToc.append("<li><a href=\"").append(artHref).append("\">").append(escapeXml(artTitle)).append("</a></li>");
 
+                    StringBuilder metaHtml = new StringBuilder();
+                    metaHtml.append("<div style='color: #666; font-style: italic; margin-bottom: 2em;'>");
+                    if (article.metadata().timestamp() > 0) {
+                        java.time.LocalDate d = java.time.Instant.ofEpochSecond(article.metadata().timestamp())
+                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                        metaHtml.append("Date: ").append(d).append("<br/>");
+                    }
+                    if (article.metadata().url() != null && !article.metadata().url().isEmpty()) {
+                        metaHtml.append("Source: <a href='").append(article.metadata().url()).append("'>")
+                                .append(escapeXml(article.metadata().url())).append("</a><br/>");
+                    }
+                    metaHtml.append("</div>");
+
+                    String content = article.htmlContent();
+                    // Inject metadata after the first <h1> if found
+                    int h1End = content.indexOf("</h1>");
+                    if (h1End != -1) {
+                        content = content.substring(0, h1End + 5) + metaHtml.toString() + content.substring(h1End + 5);
+                    } else {
+                        content = metaHtml.toString() + content;
+                    }
+
                     String artHtml = "<html><head><title>" + escapeXml(artTitle) + "</title></head><body>" +
-                            article.htmlContent() +
+                            content +
                             "</body></html>";
                     addFileToZip(zos, "OEBPS/" + artHref, artHtml, true);
                 }
