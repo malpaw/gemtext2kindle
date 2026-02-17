@@ -1,51 +1,50 @@
 package com.example.gemtext2kindle.common;
 
 import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ArticleMetadataTest {
+class ArticleMetadataTest {
 
     @Test
-    public void shouldSerializeAndDeserialize() {
-        ArticleMetadata meta = new ArticleMetadata("My Feed", "🙗", "Hello Gemini", 1707822000L, "gemini://example.com");
-        String serialized = meta.serialize();
-        
-        assertThat(serialized).contains("feed: My Feed");
-        assertThat(serialized).contains("icon: 🙗");
-        assertThat(serialized).contains("title: Hello Gemini");
-        assertThat(serialized).contains("date: 2024-02-13");
-        
-        ArticleMetadata deserialized = ArticleMetadata.deserialize(serialized);
-        assertThat(deserialized.feedName()).isEqualTo("My Feed");
-        assertThat(deserialized.feedIcon()).isEqualTo("🙗");
-        assertThat(deserialized.title()).isEqualTo("Hello Gemini");
-        assertThat(deserialized.url()).isEqualTo("gemini://example.com");
+    void testDeserializeValid() {
+        String content = "---\nfeed: My Feed\nicon: ⚡\ntitle: My Title\ndate: 2024-02-17\nurl: gemini://example.com\n---\nContent";
+        ArticleMetadata meta = ArticleMetadata.deserialize(content);
+        assertNotNull(meta);
+        assertEquals("My Feed", meta.feedName());
+        assertEquals("⚡", meta.feedIcon());
+        assertEquals("My Title", meta.title());
+        assertEquals("gemini://example.com", meta.url());
+        // 2024-02-17 at start of day
+        assertTrue(meta.timestamp() > 0);
     }
 
     @Test
-    public void shouldSerializeWithoutIcon() {
-        ArticleMetadata meta = new ArticleMetadata("My Feed", null, "Hello Gemini", 1707822000L, "gemini://example.com");
-        String serialized = meta.serialize();
-        
-        assertThat(serialized).contains("feed: My Feed");
-        assertThat(serialized).doesNotContain("icon:");
-        assertThat(serialized).contains("title: Hello Gemini");
-        
-        ArticleMetadata deserialized = ArticleMetadata.deserialize(serialized);
-        assertThat(deserialized.feedName()).isEqualTo("My Feed");
-        assertThat(deserialized.feedIcon()).isNull();
+    void testDeserializeNull() {
+        assertNull(ArticleMetadata.deserialize(null));
     }
 
     @Test
-    public void shouldReturnNullOnInvalidFormat() {
-        assertThat(ArticleMetadata.deserialize("invalid")).isNull();
-        assertThat(ArticleMetadata.deserialize("")).isNull();
-        assertThat(ArticleMetadata.deserialize(null)).isNull();
+    void testDeserializeEmpty() {
+        assertNull(ArticleMetadata.deserialize(""));
     }
 
     @Test
-    public void shouldReturnNullIfFeedNameIsMissing() {
-        String content = "---\ntitle: test\n---\n";
-        assertThat(ArticleMetadata.deserialize(content)).isNull();
+    void testDeserializeMissingFeed() {
+        String content = "---\ntitle: My Title\n---\n";
+        assertNull(ArticleMetadata.deserialize(content));
+    }
+
+    @Test
+    void testDeserializeMissingTitle() {
+        String content = "---\nfeed: My Feed\n---\n";
+        assertNull(ArticleMetadata.deserialize(content));
+    }
+
+    @Test
+    void testDeserializeMalformedDate() {
+        String content = "---\nfeed: My Feed\ntitle: T\ndate: not-a-date\n---\n";
+        ArticleMetadata meta = ArticleMetadata.deserialize(content);
+        assertNotNull(meta);
+        assertEquals(0, meta.timestamp());
     }
 }

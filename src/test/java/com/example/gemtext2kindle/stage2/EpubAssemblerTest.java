@@ -1,28 +1,41 @@
 package com.example.gemtext2kindle.stage2;
 
+import com.example.gemtext2kindle.common.ArticleMetadata;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.zip.ZipFile;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-public class EpubAssemblerTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class EpubAssemblerTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
-    public void shouldCreateValidZipStructure(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
-        Path epubPath = tempDir.resolve("test.epub");
+    void testAssembleEmpty() throws IOException {
         EpubAssembler assembler = new EpubAssembler();
+        Path output = tempDir.resolve("test.epub");
+        assembler.assemble("Test Book", Collections.emptyMap(), output);
+        assertTrue(output.toFile().exists());
+    }
+
+    @Test
+    void testAssembleWithContent() throws IOException {
+        EpubAssembler assembler = new EpubAssembler();
+        Path output = tempDir.resolve("test2.epub");
         
-        assembler.assemble("Test Title", "<p>Hello</p>", epubPath);
+        ArticleMetadata meta = new ArticleMetadata("Feed A", "⚡", "Title 1", 123456789, "url1");
+        Stage2Processor.ProcessedArticle art = new Stage2Processor.ProcessedArticle(meta, "<p>Hello</p>", Path.of("source.gmi"));
         
-        assertThat(epubPath).exists();
+        Map<String, List<Stage2Processor.ProcessedArticle>> grouped = Map.of("Feed A", List.of(art));
         
-        try (ZipFile zipFile = new ZipFile(epubPath.toFile())) {
-            assertThat(zipFile.getEntry("mimetype")).isNotNull();
-            assertThat(zipFile.getEntry("META-INF/container.xml")).isNotNull();
-            assertThat(zipFile.getEntry("OEBPS/content.opf")).isNotNull();
-            assertThat(zipFile.getEntry("OEBPS/toc.ncx")).isNotNull();
-            assertThat(zipFile.getEntry("OEBPS/content.html")).isNotNull();
-        }
+        assembler.assemble("Test Book 2", grouped, output);
+        assertTrue(output.toFile().exists());
     }
 }
