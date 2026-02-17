@@ -107,7 +107,6 @@ public class EpubAssembler {
                     htmlToc.append("<li><a href=\"").append(artHref).append("\">").append(escapeXml(artTitle)).append("</a></li>");
 
                     String artHtml = "<html><head><title>" + escapeXml(artTitle) + "</title></head><body>" +
-                            "<h1>" + escapeXml(artTitle) + "</h1>" +
                             article.htmlContent() +
                             "</body></html>";
                     addFileToZip(zos, "OEBPS/" + artHref, artHtml, true);
